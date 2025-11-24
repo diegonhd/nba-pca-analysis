@@ -1,2 +1,1 @@
-# NBA_ChampionsMatcher
-Buscando semelhanças entre os últimos 10 campeões da NBA
+# Análise PCA dos últimos 10 campeões da NBA
