@@ -99,7 +99,7 @@ def get_bench_point_percent(season):
     bench = bench.rename(columns={'PTS':'PTS_BENCH'})
     team = team[cols_team]
     df_total = pd.merge(bench, team, on="TEAM_ID")
-    df_total["BENCH_PTS_PCT"] = (df_total["PTS_BENCH"] / df_total["PTS"])
+    df_total["BENCH_PTS_PCT"] = round((df_total["PTS_BENCH"] / df_total["PTS"]), 3)
     df_total = df_total.drop(columns={"PTS_BENCH", "PTS"})
     return df_total
 
