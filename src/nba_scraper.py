@@ -10,14 +10,12 @@ from nba_api.stats.static import teams
 from nba_api.stats.endpoints import leaguedashteamshotlocations
 from nba_api.stats.endpoints import leaguedashplayerstats
 
-
-nba_teams = [
+NBA_TEAMS_LIST = [
     # Conferência Leste
     "ATLANTA HAWKS", "BOSTON CELTICS", "BROOKLYN NETS", "CHARLOTTE HORNETS", 
     "CHICAGO BULLS", "CLEVELAND CAVALIERS", "DETROIT PISTONS", "INDIANA PACERS", 
     "MIAMI HEAT", "MILWAUKEE BUCKS", "NEW YORK KNICKS", "ORLANDO MAGIC", 
     "PHILADELPHIA 76ERS", "TORONTO RAPTORS", "WASHINGTON WIZARDS",
-    
     # Conferência Oeste
     "DALLAS MAVERICKS", "DENVER NUGGETS", "GOLDEN STATE WARRIORS", "HOUSTON ROCKETS", 
     "LOS ANGELES CLIPPERS", "LOS ANGELES LAKERS", "MEMPHIS GRIZZLIES", 
@@ -26,6 +24,20 @@ nba_teams = [
     "SAN ANTONIO SPURS", "UTAH JAZZ"
 ]
 
+def get_all_teams_df():
+    df_teams = pd.DataFrame()
+    df_teams["TEAM_NAME"] = NBA_TEAMS_LIST
+    
+    # Preenche os IDs
+    dict_times_ids = {}
+    for time in NBA_TEAMS_LIST:
+        dict_times_ids[time] = find_ID_by_name(time)
+        
+    for time in df_teams["TEAM_NAME"]:
+        if time in dict_times_ids:
+            df_teams.loc[df_teams["TEAM_NAME"] == time, "TEAM_ID"] = dict_times_ids[time]
+            
+    return df_teams
 
 def find_ID_by_name(team_name):
     team_infos = teams.find_teams_by_full_name(team_name)
@@ -40,11 +52,10 @@ def getting_ID_row_by_name(teams_Series, df_teams):
     for time in teams_Series:
         dict_times_ids[time] = find_ID_by_name(time)
 
-    for time in df_teams["TEAMS"]:
+    for time in df_teams["TEAM_NAME"]:
         for k in dict_times_ids.keys():
             if time == k:
-                df_teams.loc[df_teams["TEAMS"] == time, "TEAM_ID"] = str(dict_times_ids[time])
-
+                df_teams.loc[df_teams["TEAM_NAME"] == time, "TEAM_ID"] = str(dict_times_ids[time])
 
 # Obtendo EFG_PCT, FT_RATE, ORB% e TOV%
 def get_four_factors(season):
@@ -54,7 +65,6 @@ def get_four_factors(season):
     cols_interesse = ["TEAM_ID", "EFG_PCT", "FTA_RATE", "OREB_PCT", "TM_TOV_PCT"]
     return four_factors[cols_interesse]
 
-
 # Obtendo OFF_RATING, DEF_RATING, NET_RATING, AST% E PACE.
 def get_advanced_stats(season):
     adv_stats = leaguedashteamstats.LeagueDashTeamStats(
@@ -63,7 +73,6 @@ def get_advanced_stats(season):
     cols_interesse = ['TEAM_ID', 'OFF_RATING', 'DEF_RATING', 'NET_RATING', 'AST_PCT', 'PACE']
     return adv_stats[cols_interesse]
 
-
 # Obtendo 3PT_RATE
 def get_scoring_stats(season):
     scoring_stats = leaguedashteamstats.LeagueDashTeamStats(
@@ -71,7 +80,6 @@ def get_scoring_stats(season):
     measure_type_detailed_defense='Scoring').get_data_frames()[0]
     cols_interesse = ["TEAM_ID", 'PCT_FGA_3PT']
     return scoring_stats[cols_interesse]
-
 
 # Obtendo BENCH_PTS%
 def get_bench_point_percent(season):
@@ -95,7 +103,6 @@ def get_bench_point_percent(season):
     df_total = df_total.drop(columns={"PTS_BENCH", "PTS"})
     return df_total
 
-
 # Obtendo STEAL% E BLK%
 def get_shot_locations_pct(season):
     shot_locs = leaguedashteamshotlocations.LeagueDashTeamShotLocations(
@@ -111,6 +118,7 @@ def get_shot_locations_pct(season):
     col_ra= [('Restricted Area', 'FGA')]
     col_mid_range = [('Mid-Range', 'FGA')]
     col_id = [('', 'TEAM_ID')]
+    col_name = [('', 'TEAM_NAME')]
 
     # Inserindo as colunas no nosso DataFrame
     df_total = pd.DataFrame()
@@ -120,6 +128,7 @@ def get_shot_locations_pct(season):
 
     # Calculando o RIM% e MID-RANGE%
     df_final = pd.DataFrame()
+    df_final["TEAM_NAME"] = shot_locs[col_name]
     df_final["TEAM_ID"] = shot_locs[col_id]
     df_final["RIM_PCT"] = df_total["RIM_FGA"] / df_total['FGA']
     df_final["MID_PCT"] = df_total["MIDRANGE_FGA"] / df_total['FGA']
@@ -131,8 +140,8 @@ def get_usage_stars(season, min_games=30):
 
     # Criando um df_teams (auxiliar)
     df_teams = pd.DataFrame()
-    df_teams["TEAMS"] = nba_teams
-    getting_ID_row_by_name(df_teams["TEAMS"], df_teams)
+    df_teams["TEAM_NAME"] = NBA_TEAMS_LIST
+    getting_ID_row_by_name(df_teams["TEAM_NAME"], df_teams)
     df_teams
 
     df = leaguedashplayerstats.LeagueDashPlayerStats(
@@ -174,7 +183,12 @@ def get_usage_stars(season, min_games=30):
         leader2_name.append(players_name[1])
         
     df_results = pd.DataFrame()
-    df_results["TEAM_NAME"] = nba_teams
-    df_results["LEADER 1"], df_results["USG_L1"]= leader1_name, leader2_name
-    df_results["LEADER 2"], df_results["USG_L2"] = leader1_usg, leader2_usg
-    return df_results
+    df_results["TEAM_NAME"] = NBA_TEAMS_LIST
+    df_results["LEADER 1"], df_results["LEADER 2"]= leader1_name, leader2_name
+    df_results["USG_L1"], df_results["USG_L2"] = leader1_usg, leader2_usg
+    getting_ID_row_by_name(df_results["TEAM_NAME"], df_results)
+    
+    df_usg = pd.DataFrame()
+    df_usg["TEAM_ID"] = df_results["TEAM_ID"].astype(int)
+    df_usg["SUM_USAGE"] = df_results["USG_L1"] + df_results["USG_L2"]
+    return df_usg
