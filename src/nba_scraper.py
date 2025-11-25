@@ -175,7 +175,7 @@ def get_usage_stars(season, min_games=30):
         for index, player in top_2.iterrows(): # Index iterando as linhas
             usg_val = player[metric]
             players_name.append(player['PLAYER_NAME'])
-            players_usg.append(round(usg_val, 1))
+            players_usg.append(round(usg_val, 3))
 
         leader1_usg.append(players_usg[0])
         leader2_usg.append(players_usg[1])
