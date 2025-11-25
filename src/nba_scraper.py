@@ -130,8 +130,8 @@ def get_shot_locations_pct(season):
     df_final = pd.DataFrame()
     df_final["TEAM_NAME"] = shot_locs[col_name]
     df_final["TEAM_ID"] = shot_locs[col_id]
-    df_final["RIM_PCT"] = df_total["RIM_FGA"] / df_total['FGA']
-    df_final["MID_PCT"] = df_total["MIDRANGE_FGA"] / df_total['FGA']
+    df_final["RIM_PCT"] = round(df_total["RIM_FGA"] / df_total['FGA'], 3)
+    df_final["MID_PCT"] = round(df_total["MIDRANGE_FGA"] / df_total['FGA'], 3)
 
     return df_final
 
